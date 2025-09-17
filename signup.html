@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrarse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="login-container">
+    <form id="signupForm">
+      <h2>Registrarse</h2>
+
+      <!-- Campos adicionales -->
+      <input type="text" id="newFirstName" placeholder="Nombre" required>
+      <input type="text" id="newLastName" placeholder="Apellidos" required>
+      <input type="text" id="newCedula" placeholder="Número de cédula" required>
+      <input type="email" id="newEmail" placeholder="Correo electrónico" required>
+      <input type="tel" id="newPhone" placeholder="Número de celular" required>
+
+      <input type="text" id="newUsername" placeholder="Usuario" required>
+      <input type="password" id="newPassword" placeholder="Contraseña" required>
+      <select id="newRole" required>
+        <option value="">Selecciona un rol</option>
+        <option value="admin">Administrador</option>
+        <option value="user">Usuario</option>
+      </select>
+
+      <button type="submit">Registrar</button>
+      <a href="../login.html">¿Ya tienes cuenta? Inicia sesión</a>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById("signupForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Capturar valores
+      const newUser = {
+        firstName: document.getElementById("newFirstName").value.trim(),
+        lastName: document.getElementById("newLastName").value.trim(),
+        cedula: document.getElementById("newCedula").value.trim(), // 📌 Cédula guardada
+        email: document.getElementById("newEmail").value.trim(),
+        phone: document.getElementById("newPhone").value.trim(),
+        username: document.getElementById("newUsername").value.trim(),
+        password: document.getElementById("newPassword").value,
+        role: document.getElementById("newRole").value
+      };
+
+      // Validación básica de cédula (solo números)
+      if (!/^\d+$/.test(newUser.cedula)) {
+        alert("⚠️ La cédula debe contener solo números.");
+        return;
+      }
+
+      // Guardar en localStorage
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      users.push(newUser);
+      localStorage.setItem("users", JSON.stringify(users));
+
+      alert("✅ Usuario registrado con éxito.");
+      window.location.href = "../login.html";
+    });
+  </script>
+
+</body>
+</html>

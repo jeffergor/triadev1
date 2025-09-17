@@ -1,0 +1,532 @@
+<!DOCTYPE html>  
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrador</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; color: #333; }
+    .navbar { background: #2c3e50; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .navbar h1 { font-size: 20px; margin: 0; }
+    .navbar a { color: white; text-decoration: none; background: #e74c3c; padding: 8px 15px; border-radius: 5px; transition: 0.3s; }
+    .navbar a:hover { background: #c0392b; }
+    .dashboard-container { display: flex; }
+    .sidebar { width: 220px; background: #34495e; min-height: 100vh; padding-top: 30px; }
+    .sidebar a { display: block; color: #ecf0f1; padding: 12px 20px; text-decoration: none; transition: 0.3s; }
+    .sidebar a:hover { background: #1abc9c; color: white; }
+    .content { flex: 1; padding: 30px; }
+    .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .card h2 { margin-top: 0; color: #2c3e50; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background: #2c3e50; color: white; }
+    tr:hover { background: #f1f1f1; }
+    .btn-delete { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+    .btn-delete:hover { background: #c0392b; }
+    .chatbot-container { max-width: 500px; margin: auto; border-radius: 10px; padding: 20px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); animation: fadeIn 1s ease-in-out; }
+    .chatbox { max-height: 300px; overflow-y: auto; margin-bottom: 10px; }
+    .message { padding: 8px; margin: 5px 0; border-radius: 8px; }
+    .bot { background: #1abc9c; color: white; text-align: left; }
+    .user { background: #3498db; color: white; text-align: right; }
+    input[type="text"], input[type="file"], input[type="password"], select, textarea { width: 80%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+    button { padding: 8px 15px; border: none; background: #2c3e50; color: white; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #1abc9c; }
+    .buscador { margin-bottom: 20px; }
+    .resultados { margin-top: 20px; }
+    .carpeta { background: #f9f9f9; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #ddd; }
+    .carpeta a { color: #3498db; text-decoration: none; font-weight: bold; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .admin-foto { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <img id="adminFoto" class="admin-foto" src="admin.png" alt="Admin Foto">
+      <h1>Panel de Administrador</h1>
+    </div>
+    <a href="login.html" onclick="logout()">Cerrar sesión</a>
+  </div>
+
+  <div class="dashboard-container">
+    <div class="sidebar">
+      <a href="#" onclick="showSection('inicio')">🏠 Inicio</a>
+      <a href="#" onclick="showSection('usuarios')">👥 Usuarios</a>
+      <a href="#" onclick="showSection('estadisticas')">📊 Estadísticas</a>
+      <a href="#" onclick="showSection('documentos')">📂 Documentos</a>
+      <a href="#" onclick="showSection('mensajes')">📩 Mensajes de Usuarios</a>
+    </div>
+
+    <div class="content">
+      <!-- Inicio -->
+      <div id="inicio" class="card">
+        <h2>Bienvenido al Panel 🎉</h2>
+        <div class="chatbot-container">
+          <div class="chatbox" id="chatbox">
+            <div class="message bot">Hola 👋 Soy tu asistente virtual. Pregúntame sobre la plataforma.</div>
+          </div>
+          <input type="text" id="userInput" placeholder="Escribe tu pregunta...">
+          <button onclick="sendMessage()">Enviar</button>
+        </div>
+      </div>
+
+      <!-- Usuarios -->
+      <div id="usuarios" class="card" style="display:none;">
+        <h2>Gestión de Usuarios</h2>
+        <table id="usersTable">
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Cédula</th><th>Usuario</th><th>Rol</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Estadísticas -->
+      <div id="estadisticas" class="card" style="display:none;">
+        <h2>📊 Estadísticas</h2>
+        <label for="filtroTiempo">Filtrar por:</label>
+        <select id="filtroTiempo" onchange="actualizarEstadisticas()">
+          <option value="diario">Diario</option>
+          <option value="mensual">Mensual</option>
+          <option value="trimestral">Trimestral</option>
+          <option value="anual">Anual</option>
+        </select>
+        <canvas id="barChart"></canvas><br>
+        <canvas id="pieChart"></canvas><br>
+        <canvas id="heatmapChart"></canvas><br>
+        <canvas id="graphChart"></canvas>
+      </div>
+
+      <!-- Documentos -->
+      <div id="documentos" class="card" style="display:none;">
+        <h2>📂 Gestión de Documentos</h2>
+        <div class="buscador">
+          <input type="text" id="searchInput" placeholder="Buscar por cédula, nombre o correo" onkeyup="buscarUsuario()">
+        </div>
+        <div id="resultadoBusqueda"></div>
+
+        <h3>Subir Documentos</h3>
+        <input type="text" id="docNombre" placeholder="Nombre del usuario"><br><br>
+        <input type="text" id="docCedula" placeholder="Cédula"><br><br>
+        <label for="docTipo"><b>Tipo de Proceso:</b></label><br>
+        <select id="docTipo">
+          <option value="demanda">📑 Demanda</option>
+          <option value="tutela">⚖️ Tutela</option>
+          <option value="pagos">💳 Pagos</option>
+          <option value="deudas">💰 Deudas</option>
+          <option value="juridicos">📂 Procesos Jurídicos</option>
+        </select><br><br>
+
+        <input type="file" id="docFile" multiple><br><br>
+        <button onclick="subirDocumento()">📤 Subir Documento</button>
+        <hr>
+        <h3>Subir Base de Datos (CSV/Excel)</h3>
+        <input type="file" id="dbFile"><br><br>
+        <button onclick="procesarBD()">📊 Procesar BD</button>
+        <div class="resultados" id="resultados"></div>
+      </div>
+
+      <!-- Mensajes -->
+      <div id="mensajes" class="card" style="display:none;">
+        <h2>📩 Mensajes Recibidos</h2>
+        <div id="listaMensajes"></div>
+      </div>
+    </div>
+  </div>
+<!-- 📤 ENVIAR MENSAJE A USUARIO -->
+<div id="enviarMensajeUsuario" class="section" style="display:none;">
+  <h2>📤 Enviar Mensaje a Usuario</h2>
+
+  <label>Buscar usuario (cédula, nombre o correo):</label>
+  <input type="text" id="busquedaUsuario" onkeyup="buscarUsuario()" placeholder="Escribe para buscar...">
+  <ul id="resultadosBusqueda"></ul>
+
+  <form id="formMensajeAdmin" style="display:none;">
+    <h3>✉️ Redactar mensaje</h3>
+    <p><b>Destino:</b> <span id="usuarioDestino"></span></p>
+
+    <label>Asunto:</label>
+    <input type="text" id="asuntoAdmin" required><br><br>
+
+    <label>Mensaje:</label>
+    <textarea id="mensajeAdmin" rows="4" required></textarea><br><br>
+
+    <label>Adjuntar documentos:</label>
+    <input type="file" id="adjuntosAdmin" multiple><br><br>
+
+    <button type="submit">📨 Enviar Mensaje</button>
+  </form>
+</div>
+
+  <script>
+    function showSection(section) {
+      document.querySelectorAll(".content .card").forEach(card => card.style.display = "none");
+      document.getElementById(section).style.display = "block";
+      if (section === "usuarios") loadUsers();
+      if (section === "estadisticas") actualizarEstadisticas();
+      if (section === "mensajes") mostrarMensajes();
+    }
+
+    function loadUsers() {
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      const tbody = document.querySelector("#usersTable tbody");
+      tbody.innerHTML = "";
+      users.forEach((user, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${user.firstName} ${user.lastName}</td>
+          <td>${user.email}</td>
+          <td>${user.phone}</td>
+          <td>${user.cedula || "No registrada"}</td>
+          <td>${user.username}</td>
+          <td>${user.role}</td>
+          <td><button class="btn-delete" onclick="deleteUser(${index})">Eliminar</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function deleteUser(index) {
+      let users = JSON.parse(localStorage.getItem("users")) || [];
+      if (confirm("¿Seguro que quieres eliminar este usuario?")) {
+        users.splice(index, 1);
+        localStorage.setItem("users", JSON.stringify(users));
+        loadUsers();
+      }
+    }
+
+    function logout() { localStorage.removeItem("currentUser"); }
+
+    const respuestas = {
+      "hola": "¡Hola! ¿Cómo estás?",
+      "usuarios": "Puedes gestionar usuarios desde la sección 👥 Usuarios.",
+      "estadisticas": "Las estadísticas están en 📊 Estadísticas.",
+      "configuracion": "Desde aquí puedes cambiar ajustes ⚙️.",
+      "documentos": "En la sección 📂 Documentos puedes buscar y subir documentos.",
+      "ayuda": "Estoy aquí para ayudarte con preguntas sobre la plataforma.",
+      "default": "Lo siento, no entendí tu pregunta 🤔."
+    };
+
+    function sendMessage() {
+      const input = document.getElementById("userInput");
+      const chatbox = document.getElementById("chatbox");
+      const text = input.value.trim().toLowerCase();
+      if (!text) return;
+      chatbox.innerHTML += `<div class="message user">${text}</div>`;
+      setTimeout(() => {
+        const response = respuestas[text] || respuestas["default"];
+        chatbox.innerHTML += `<div class="message bot">${response}</div>`;
+        chatbox.scrollTop = chatbox.scrollHeight;
+      }, 500);
+      input.value = "";
+    }
+
+    let documentos = JSON.parse(localStorage.getItem("documentos")) || [];
+
+    function subirDocumento() {
+      const nombre = document.getElementById("docNombre").value.trim();
+      const cedula = document.getElementById("docCedula").value.trim();
+      const tipo = document.getElementById("docTipo").value;
+      const archivos = document.getElementById("docFile").files;
+      if (!nombre || !cedula || archivos.length === 0) {
+        alert("Completa todos los campos.");
+        return;
+      }
+      for (let archivo of archivos) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          documentos.push({
+            nombre,
+            cedula,
+            tipo,
+            archivo: archivo.name,
+            contenido: e.target.result,
+            fecha: new Date().toLocaleString(),
+            estado: "Pendiente"
+          });
+          localStorage.setItem("documentos", JSON.stringify(documentos));
+        };
+        reader.readAsDataURL(archivo);
+      }
+      document.getElementById("docNombre").value = "";
+      document.getElementById("docCedula").value = "";
+      document.getElementById("docFile").value = "";
+    }
+
+    /* 🔎 Buscar usuario + documentos */
+    function buscarUsuario() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      const docs = JSON.parse(localStorage.getItem("documentos")) || [];
+      const resultadoDiv = document.getElementById("resultadoBusqueda");
+      resultadoDiv.innerHTML = "";
+
+      if (!input) return;
+
+      const encontrados = users.filter(user =>
+        (user.cedula && user.cedula.toLowerCase().includes(input)) ||
+        (user.firstName && user.firstName.toLowerCase().includes(input)) ||
+        (user.lastName && user.lastName.toLowerCase().includes(input)) ||
+        (user.email && user.email.toLowerCase().includes(input))
+      );
+
+      if (encontrados.length === 0) {
+        resultadoDiv.innerHTML = "<p>No se encontró ningún usuario.</p>";
+        return;
+      }
+
+      encontrados.forEach(user => {
+        const userDocs = docs.filter(d => d.cedula === user.cedula);
+        let html = `<div class="carpeta">
+          <h4>👤 ${user.firstName} ${user.lastName} (${user.cedula || "Sin cédula"})</h4>
+          <p><b>Correo:</b> ${user.email}</p>
+          <p><b>Teléfono:</b> ${user.phone}</p>
+          <h5>📂 Documentos:</h5>`;
+
+        if (userDocs.length === 0) {
+          html += "<p>No tiene documentos registrados.</p>";
+        } else {
+          
+          <!-- Dentro de buscarUsuario(), donde muestras documentos -->
+          userDocs.forEach((doc, i) => {
+            html += `
+              <div>
+                <p>📑 <b>${doc.tipo}</b> - ${doc.archivo} (${doc.fecha}) 
+                   <span style="color:${doc.estado === "Resuelto" ? "green" : "orange"};">
+                     [${doc.estado}]
+                   </span>
+                </p>
+                <button onclick="verDocumento('${doc.contenido}')">👁️ Ver</button>
+                <button onclick="descargarDocumento('${doc.archivo}','${doc.contenido}')">⬇️ Descargar</button>
+                <button class="btn-delete" onclick="eliminarDocumento('${doc.cedula}','${doc.archivo}')">🗑️ Eliminar</button>
+                <button onclick="marcarResuelto('${doc.cedula}','${doc.archivo}')">✅ Resuelto</button>
+              </div>
+            `;
+          });
+          
+        }
+        html += "</div>";
+        resultadoDiv.innerHTML += html;
+      });
+    }
+
+    function verDocumento(dataURL) {
+      const win = window.open();
+      win.document.write(`<iframe src="${dataURL}" width="100%" height="100%"></iframe>`);
+    }
+
+    function descargarDocumento(nombre, dataURL) {
+      const link = document.createElement("a");
+      link.href = dataURL;
+      link.download = nombre;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+ /* 📩 Mensajes */
+function mostrarMensajes() {
+  const mensajes = JSON.parse(localStorage.getItem("mensajesUsuarios")) || [];
+  const contenedor = document.getElementById("listaMensajes");
+  contenedor.innerHTML = "";
+
+  if (mensajes.length === 0) {
+    contenedor.innerHTML = "<p>No hay mensajes por mostrar</p>";
+    return;
+  }
+
+  mensajes.forEach((msg, index) => {
+    const div = document.createElement("div");
+    div.classList.add("carpeta");
+
+    const remitenteNombre = msg.remitente || "Sin nombre";
+    const remitenteCorreo = msg.correo || "Sin correo";
+    const adminDestino = msg.destino || "No especificado";
+
+    let archivosHTML = "";
+    if (msg.adjuntos && msg.adjuntos.length > 0) {
+      archivosHTML = "<p><b>📎 Archivos adjuntos:</b></p>";
+      msg.adjuntos.forEach((file) => {
+        archivosHTML += `
+          <div>
+            <p>📑 ${file.nombre}</p>
+            <button onclick="verDocumento('${file.contenido}')">👁️ Ver</button>
+            <button onclick="descargarDocumento('${file.nombre}','${file.contenido}')">⬇️ Descargar</button>
+          </div>
+        `;
+      });
+    }
+
+    div.innerHTML = `
+      <p><b>Remitente:</b> ${remitenteNombre}</p>
+      <p><b>Correo:</b> ${remitenteCorreo}</p>
+      <p><b>Administrador destino:</b> ${adminDestino}</p>
+      <p><b>Asunto:</b> ${msg.asunto || "Sin asunto"}</p>
+      <p><b>Mensaje:</b> ${msg.mensaje || "Sin mensaje"}</p>
+      <p><b>Fecha:</b> ${msg.fecha || "Sin fecha"}</p>
+      ${archivosHTML}
+      <button class="btn-delete" onclick="eliminarMensaje(${index})">🗑️ Eliminar mensaje</button>
+    `;
+    contenedor.appendChild(div);
+  });
+}
+
+function eliminarMensaje(index) {
+  if (confirm("¿Seguro que deseas eliminar este mensaje?")) {
+    let mensajes = JSON.parse(localStorage.getItem("mensajesUsuarios")) || [];
+    mensajes.splice(index, 1); // ❌ elimina mensaje por índice
+    localStorage.setItem("mensajesUsuarios", JSON.stringify(mensajes));
+    mostrarMensajes(); // 🔄 refrescar la lista
+  }
+}
+
+// Funciones auxiliares para adjuntos
+function verDocumento(base64) {
+  const nuevaVentana = window.open();
+  nuevaVentana.document.write(`<iframe src="${base64}" width="100%" height="100%"></iframe>`);
+}
+
+function descargarDocumento(nombre, base64) {
+  const enlace = document.createElement("a");
+  enlace.href = base64;
+  enlace.download = nombre;
+  enlace.click();
+}
+
+
+
+    /* 📊 Estadísticas */
+    let barChart, pieChart, heatmapChart, graphChart;
+    function actualizarEstadisticas() {
+      const docs = JSON.parse(localStorage.getItem("documentos")) || [];
+      let pendientes = docs.filter(d => d.estado === "Pendiente").length;
+      let resueltos = docs.filter(d => d.estado === "Resuelto").length;
+
+      const ctxBar = document.getElementById("barChart").getContext("2d");
+      if (barChart) barChart.destroy();
+      barChart = new Chart(ctxBar, {
+        type: "bar",
+        data: { labels: ["Pendientes", "Resueltos"], datasets: [{ data: [pendientes, resueltos], backgroundColor: ["#e67e22", "#27ae60"] }] }
+      });
+
+      const ctxPie = document.getElementById("pieChart").getContext("2d");
+      if (pieChart) pieChart.destroy();
+      pieChart = new Chart(ctxPie, {
+        type: "pie",
+        data: { labels: ["Pendientes", "Resueltos"], datasets: [{ data: [pendientes, resueltos], backgroundColor: ["#e67e22", "#27ae60"] }] }
+      });
+
+      const ctxHeat = document.getElementById("heatmapChart").getContext("2d");
+      if (heatmapChart) heatmapChart.destroy();
+      heatmapChart = new Chart(ctxHeat, {
+        type: "line",
+        data: { labels: docs.map(d => d.fecha), datasets: [{ label: "Flujo de trabajo", data: docs.map((d, i) => i + 1), borderColor: "#2980b9" }] }
+      });
+
+      const ctxGraph = document.getElementById("graphChart").getContext("2d");
+      if (graphChart) graphChart.destroy();
+      graphChart = new Chart(ctxGraph, {
+        type: "radar",
+        data: { labels: ["Pendientes", "Resueltos"], datasets: [{ label: "Precisión", data: [pendientes, resueltos], backgroundColor: "rgba(46,204,113,0.2)", borderColor: "#2ecc71" }] }
+      });
+    }
+
+    const fotoAdmin = localStorage.getItem("adminFoto");
+    if (fotoAdmin) { document.getElementById("adminFoto").src = fotoAdmin; }
+
+    /* 📊 Procesar BD */
+    function procesarBD() {
+      const fileInput = document.getElementById("dbFile");
+      const resultados = document.getElementById("resultados");
+      resultados.innerHTML = "";
+
+      if (fileInput.files.length === 0) {
+        alert("Por favor selecciona un archivo CSV o Excel.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        let data = new Uint8Array(e.target.result);
+        let workbook = XLSX.read(data, { type: "array" });
+
+        let firstSheet = workbook.SheetNames[0];
+        let worksheet = workbook.Sheets[firstSheet];
+        let jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+        let cleanedData = jsonData
+          .filter(row => Object.values(row).some(value => value !== ""))
+          .map(row => {
+            let newRow = {};
+            for (let key in row) {
+              newRow[key.trim()] = String(row[key]).trim();
+            }
+            return newRow;
+          });
+
+        let table = "<h4>📊 Vista previa de la base depurada:</h4><table border='1'><thead><tr>";
+        if (cleanedData.length > 0) {
+          Object.keys(cleanedData[0]).forEach(col => {
+            table += `<th>${col}</th>`;
+          });
+          table += "</tr></thead><tbody>";
+
+          cleanedData.slice(0, 10).forEach(row => {
+            table += "<tr>";
+            Object.values(row).forEach(val => {
+              table += `<td>${val}</td>`;
+            });
+            table += "</tr>";
+          });
+
+          table += "</tbody></table>";
+        } else {
+          table += "<tr><td>No se encontraron datos después de limpiar.</td></tr></table>";
+        }
+
+        resultados.innerHTML = table;
+
+        let downloadBtn = document.createElement("button");
+        downloadBtn.textContent = "⬇️ Descargar BD Depurada";
+        downloadBtn.onclick = function() {
+          let newWorksheet = XLSX.utils.json_to_sheet(cleanedData);
+          let newWorkbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "Depurado");
+          XLSX.writeFile(newWorkbook, "BaseDepurada.xlsx");
+        };
+        resultados.appendChild(downloadBtn);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+    function eliminarDocumento(cedula, archivo) {
+      if (confirm("¿Seguro que deseas eliminar este documento?")) {
+        let docs = JSON.parse(localStorage.getItem("documentos")) || [];
+        docs = docs.filter(d => !(d.cedula === cedula && d.archivo === archivo));
+        localStorage.setItem("documentos", JSON.stringify(docs));
+        buscarUsuario(); // 🔄 refresca la vista de resultados
+      }
+    }
+    function marcarResuelto(cedula, archivo) {
+      let documentos = JSON.parse(localStorage.getItem("documentos")) || [];
+      let index = documentos.findIndex(d => d.cedula === cedula && d.archivo === archivo);
+      if (index !== -1) {
+        documentos[index].estado = "Resuelto"; // ✅ cambiar estado
+        localStorage.setItem("documentos", JSON.stringify(documentos));
+        alert("Documento marcado como Resuelto ✅");
+        buscarUsuario(); // 🔄 refrescar la vista actual
+        actualizarEstadisticas(); // 📊 refrescar estadísticas
+      }
+    }
+    
+  </script>
+</body>
+</html>

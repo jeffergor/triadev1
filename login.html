@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="login-container">
+    <form id="loginForm">
+      <h2>Login Jurídico</h2>
+      <input type="text" id="username" placeholder="Usuario" required>
+<input type="password" id="password" placeholder="Contraseña" required>
+<select id="role" required>
+  <option value="">Selecciona un rol</option>
+  <option value="admin">Administrador</option>
+  <option value="user">Usuario</option>
+</select>
+      <button type="submit">Ingresar</button>
+      <a href="signup\signup.html">¿No tienes cuenta? Regístrate</a>
+    </form>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

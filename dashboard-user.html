@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Usuario</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* 🔘 Botón flotante */
+/* Botón flotante circular */
+#chatbot-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #1e3c72;
+  color: white;
+  border-radius: 50%;
+  width: 55px;
+  height: 55px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+
+#chatbot-button:hover { transform: scale(1.1); }
+
+/* Ventana del chatbot */
+#chatbot {
+  display: none;
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 320px;
+  height: 420px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#chatbot header {
+  background: linear-gradient(to right, #1e3c72, #2a5298);
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
+#chatbot-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+/* Mensajes */
+.user-message {
+  text-align: right;
+  background: #e0ebff;
+  margin: 5px;
+  padding: 8px;
+  border-radius: 10px;
+  display: inline-block;
+}
+.bot-message {
+  text-align: left;
+  background: #f0f0f0;
+  margin: 5px;
+  padding: 8px;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+/* Barra de entrada */
+#chatbot-input {
+  display: flex;
+  border-top: 1px solid #ddd;
+}
+#chatbot-input input {
+  flex: 1;
+  border: none;
+  padding: 10px;
+  font-size: 14px;
+}
+#chatbot-input button {
+  background: #1e3c72;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+}
+#chatbot-input button:hover { background: #2a5298; }
+  </style>
+</head>
+<body>
+  <header style="background: linear-gradient(to right, #1e3c72, #2a5298); color: white; padding: 15px; text-align: center;">
+    <h1>📌 Panel Usuario</h1>
+    <nav>
+      <button onclick="mostrarSeccion('inicio')">🏠 Inicio</button>
+      <button onclick="mostrarSeccion('documentos')">📂 Documentos</button>
+      <button onclick="mostrarSeccion('mensajes')">✉️ Mensajes</button>
+      <button onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+    </nav>
+  </header>
+
+  <main style="padding: 20px;">
+    <!-- INICIO -->
+    <section id="inicio" class="section">
+      <form>
+        <h2>Bienvenido al panel de usuario</h2>
+        <p>Aquí podrás ver los documentos enviados por el administrador y comunicarte con él.</p>
+      </form>
+    </section>
+
+    <!-- DOCUMENTOS -->
+    <section id="documentos" class="section" style="display:none;">
+      <form>
+        <h2>📂 Documentos Recibidos</h2>
+        <label for="categoriaSelect">Selecciona la categoría:</label>
+        <select id="categoriaSelect" onchange="mostrarDocumentos()">
+          <option value="">-- Selecciona --</option>
+          <option value="demanda">📑 Demanda</option>
+          <option value="tutela">⚖️ Tutela</option>
+          <option value="pagos">💰 Pagos</option>
+          <option value="deudas">📉 Deudas</option>
+          <option value="reportes">📊 Reportes</option>
+          <option value="procesos">📂 Procesos Jurídicos</option>
+        </select>
+
+        <h3>Documentos disponibles</h3>
+        <ul id="listaDocumentos"></ul>
+      </form>
+    </section>
+
+    <!-- MENSAJES -->
+    <section id="mensajes" class="section" style="display:none;">
+      <form id="formMensaje">
+        <h2>✉️ Enviar Mensaje al Administrador</h2>
+
+        <label for="nombreUsuario">Tu nombre:</label>
+        <input type="text" id="nombreUsuario" required>
+
+        <label for="correoUsuario">Tu correo:</label>
+        <input type="email" id="correoUsuario" required>
+
+        <label for="destino">Destino:</label>
+        <select id="destino" required>
+          <option value="">-- Selecciona --</option>
+          <option value="Legal">⚖️ Área Legal</option>
+          <option value="Finanzas">💰 Área Finanzas</option>
+          <option value="Administrador">🛠️ Administrador General</option>
+        </select>
+
+        <label for="asunto">Asunto:</label>
+        <input type="text" id="asunto" required>
+
+        <label for="mensajeTexto">Mensaje:</label>
+        <textarea id="mensajeTexto" rows="4" required></textarea>
+
+        <label for="adjuntos">Adjuntar archivos:</label>
+        <input type="file" id="adjuntos" multiple>
+
+        <button type="submit">📨 Enviar</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- 💬 Chatbot flotante -->
+  <!-- 🤖 BOTÓN DEL CHAT -->
+  <div id="chatbot-button">💬</div>
+
+  <!-- 🤖 Ventana del chatbot -->
+  <div id="chatbot">
+    <header>Asistente Virtual</header>
+    <div id="chatbot-messages">
+      <p><strong>🤖 Bot:</strong> Hola 👋, soy tu asistente virtual. Escríbeme o elige una pregunta:</p>
+      <ul>
+        <li onclick="botPregunta('¿Cómo subo un documento?')">📂 ¿Cómo subo un documento?</li>
+        <li onclick="botPregunta('¿Cómo envío un mensaje al administrador?')">✉️ ¿Cómo envío un mensaje?</li>
+        <li onclick="botPregunta('¿Qué categorías de documentos existen?')">📑 ¿Qué categorías existen?</li>
+      </ul>
+    </div>
+    <div id="chatbot-input">
+      <input type="text" id="chatbot-text" placeholder="Escribe tu mensaje..." onkeypress="if(event.key==='Enter'){enviarMensaje()}" />
+      <button onclick="enviarMensaje()">➤</button>
+    </div>
+  </div>
+
+
+  <script>
+    // Mostrar secciones
+    function mostrarSeccion(id) {
+      document.querySelectorAll(".section").forEach(sec => sec.style.display = "none");
+      document.getElementById(id).style.display = "block";
+    }
+
+    // Cerrar sesión
+    function cerrarSesion() {
+      localStorage.removeItem("currentUser");
+      window.location.href = "login.html";
+    }
+
+    // --- 📂 DOCUMENTOS RECIBIDOS DEL ADMIN ---
+    function mostrarDocumentos() {
+      const categoria = document.getElementById("categoriaSelect").value;
+      const lista = document.getElementById("listaDocumentos");
+      lista.innerHTML = "";
+
+      if (!categoria) return;
+
+      let documentos = JSON.parse(localStorage.getItem("documentosAdmin")) || [];
+      const filtrados = documentos.filter(doc => doc.categoria === categoria);
+
+      if (filtrados.length === 0) {
+        lista.innerHTML = "<li>❌ No hay documentos en esta categoría.</li>";
+        return;
+      }
+
+      filtrados.forEach((doc) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          📄 <strong>${doc.nombre}</strong> (${doc.archivo}) - <em>${doc.fecha}</em>
+          <button onclick="descargarDoc('${doc.contenido}','${doc.archivo}')">⬇️ Descargar</button>
+        `;
+        lista.appendChild(li);
+      });
+    }
+
+    function descargarDoc(contenido, nombre) {
+      const link = document.createElement("a");
+      link.href = contenido;
+      link.download = nombre;
+      link.click();
+    }
+
+    // --- ✉️ MENSAJES ---
+    document.getElementById("formMensaje").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const nombre = document.getElementById("nombreUsuario").value;
+      const correo = document.getElementById("correoUsuario").value;
+      const destino = document.getElementById("destino").value;
+      const asunto = document.getElementById("asunto").value;
+      const mensaje = document.getElementById("mensajeTexto").value;
+      const fecha = new Date().toLocaleString();
+
+      const archivos = document.getElementById("adjuntos").files;
+      let adjuntos = [];
+      let cargados = 0;
+
+      if (archivos.length === 0) {
+        guardarMensaje();
+      } else {
+        for (let i = 0; i < archivos.length; i++) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            adjuntos.push({ nombre: archivos[i].name, contenido: e.target.result });
+            cargados++;
+            if (cargados === archivos.length) {
+              guardarMensaje();
+            }
+          };
+          reader.readAsDataURL(archivos[i]);
+        }
+      }
+
+      function guardarMensaje() {
+        const nuevoMensaje = {
+          remitente: nombre,
+          correo: correo,
+          destino: destino,
+          asunto: asunto,
+          mensaje: mensaje,
+          fecha: fecha,
+          adjuntos: adjuntos
+        };
+
+        let mensajes = JSON.parse(localStorage.getItem("mensajesUsuarios")) || [];
+        mensajes.push(nuevoMensaje);
+        localStorage.setItem("mensajesUsuarios", JSON.stringify(mensajes));
+
+        alert("✅ Mensaje enviado correctamente.");
+        document.getElementById("formMensaje").reset();
+      }
+    });
+
+    document.getElementById("chatbot-button").onclick = () => {
+      const bot = document.getElementById("chatbot");
+      bot.style.display = (bot.style.display === "flex") ? "none" : "flex";
+    };
+  
+    // Preguntas rápidas
+    function botPregunta(pregunta) {
+      agregarMensaje(pregunta, "user");
+      let respuesta = "";
+  
+      if (pregunta.includes("documento")) {
+        respuesta = "📂 Para subir documentos, ve a la sección de Documentos.";
+      } else if (pregunta.includes("mensaje")) {
+        respuesta = "✉️ Para enviar un mensaje, entra en la sección Mensajes.";
+      } else if (pregunta.includes("categorías")) {
+        respuesta = "📑 Existen categorías como Demanda, Tutela, Pagos, Deudas, Reportes y Procesos Jurídicos.";
+      } else {
+        respuesta = "🤔 Lo siento, aún no tengo respuesta para eso.";
+      }
+      agregarMensaje(respuesta, "bot");
+    }
+  
+    // Enviar mensaje escrito
+    function enviarMensaje() {
+      const input = document.getElementById("chatbot-text");
+      const mensaje = input.value.trim();
+      if (!mensaje) return;
+  
+      agregarMensaje(mensaje, "user");
+  
+      // Respuesta básica del bot
+      let respuesta = "🤖 Estoy en versión básica, pregúntame sobre Documentos y Mensajes.";
+      if (mensaje.toLowerCase().includes("hola")) {
+        respuesta = "👋 ¡Hola! ¿Cómo estás?";
+      } else if (mensaje.toLowerCase().includes("gracias")) {
+        respuesta = "😊 De nada, ¡siempre a la orden!";
+      } else if (mensaje.toLowerCase().includes("adios")) {
+        respuesta = "👋 Hasta luego, ¡que tengas un buen día!";
+      }
+  
+      agregarMensaje(respuesta, "bot");
+      input.value = "";
+    }
+  
+    // Mostrar mensajes en pantalla
+    function agregarMensaje(texto, tipo) {
+      const contenedor = document.getElementById("chatbot-messages");
+      const msg = document.createElement("p");
+      msg.className = tipo === "user" ? "user-message" : "bot-message";
+      msg.innerText = (tipo === "user" ? "🙋 " : "🤖 ") + texto;
+      contenedor.appendChild(msg);
+      contenedor.scrollTop = contenedor.scrollHeight;
+    }
+
+  </script>
+</body>
+</html>
